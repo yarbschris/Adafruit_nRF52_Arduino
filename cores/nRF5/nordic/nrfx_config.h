@@ -39,6 +39,7 @@
 #define NRFX_PPI_ENABLED 1
 
 // Enable timer peripheral for pcnt
+#define NRFX_TIMER_DEFAULT_CONFIG_IRQ_PRIORITY 6
 #define NRFX_TIMER_ENABLED 1
 #define NRFX_TIMER0_ENABLED 1
 #define NRFX_TIMER1_ENABLED 0
