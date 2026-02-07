@@ -40,6 +40,7 @@
 
 // Enable GPIOTE for pulse counter
 #define NRFX_GPIOTE_ENABLED 1
+#define NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 1
 
 // Enable PPI for pulse counter
 #define NRFX_PPI_ENABLED 1
