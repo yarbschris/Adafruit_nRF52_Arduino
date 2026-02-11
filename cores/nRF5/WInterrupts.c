@@ -186,9 +186,7 @@ void detachInterrupt(uint32_t pin) {
   }
 }
 
-/*
-void GPIOTE_IRQHandler()
-{
+void GPIOTE_IRQHandler() {
 #if CFG_SYSVIEW
   SEGGER_SYSVIEW_RecordEnterISR();
 #endif
@@ -200,14 +198,16 @@ void GPIOTE_IRQHandler()
     // only process where the interrupt is enabled and the event register is set
     // check interrupt enabled mask first, as already read that IOM value, to
     // reduce delays from AHB (16MHz) reads.
-    if ( 0 == (enabledInterruptMask & (1 << ch))) continue;
-    if ( 0 == NRF_GPIOTE->EVENTS_IN[ch]) continue;
+    if (0 == (enabledInterruptMask & (1 << ch)))
+      continue;
+    if (0 == NRF_GPIOTE->EVENTS_IN[ch])
+      continue;
 
     // If the event was set and interrupts are enabled,
     // call the callback function only if it exists,
     // but ALWAYS clear the event to prevent an interrupt storm.
     if (channelMap[ch] != -1 && callbacksInt[ch]) {
-      if ( callbackDeferred[ch] ) {
+      if (callbackDeferred[ch]) {
         // Adafruit defer callback to non-isr if configured so
         ada_callback(NULL, 0, callbacksInt[ch]);
       } else {
@@ -222,11 +222,14 @@ void GPIOTE_IRQHandler()
   // See note at nRF52840_PS_v1.1.pdf section 6.1.8 ("interrupt clearing")
   // See also https://gcc.gnu.org/onlinedocs/gcc/Volatiles.html for why
   // using memory barrier instead of read of an unrelated volatile
-  __DSB(); __NOP();__NOP();__NOP();__NOP();
+  __DSB();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
 #endif
 
 #if CFG_SYSVIEW
   SEGGER_SYSVIEW_RecordExitISR();
 #endif
 }
-*/
