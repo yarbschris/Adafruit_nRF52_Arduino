@@ -33,9 +33,9 @@
 
 // Enable Timer for pulse counter
 #define NRFX_TIMER_ENABLED 1
-#define NRFX_TIMER0_ENABLED 1
+#define NRFX_TIMER0_ENABLED 0
 #define NRFX_TIMER1_ENABLED 0
-#define NRFX_TIMER2_ENABLED 0
+#define NRFX_TIMER2_ENABLED 1
 #define NRFX_TIMER3_ENABLED 0
 
 // Enable GPIOTE for pulse counter
