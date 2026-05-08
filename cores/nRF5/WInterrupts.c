@@ -20,8 +20,8 @@
 #include <nrf.h>
 
 #include "Arduino.h"
-#include "wiring_private.h"
 #include "nrf_gpiote.h"
+#include "wiring_private.h"
 
 #include <string.h>
 
@@ -32,7 +32,8 @@
 #endif
 
 #ifdef GPIOTE_CONFIG_PORT_Msk
-#define GPIOTE_CONFIG_PORT_PIN_Msk (GPIOTE_CONFIG_PORT_Msk | GPIOTE_CONFIG_PSEL_Msk)
+#define GPIOTE_CONFIG_PORT_PIN_Msk                                             \
+  (GPIOTE_CONFIG_PORT_Msk | GPIOTE_CONFIG_PSEL_Msk)
 #else
 #define GPIOTE_CONFIG_PORT_PIN_Msk GPIOTE_CONFIG_PSEL_Msk
 #endif
@@ -43,8 +44,7 @@ static int8_t channelMap[NUMBER_OF_GPIO_TE];
 static int enabled = 0;
 
 /* Configure I/O interrupt sources */
-static void __initialize()
-{
+static void __initialize() {
   memset(callbacksInt, 0, sizeof(callbacksInt));
   memset(channelMap, -1, sizeof(channelMap));
   memset(callbackDeferred, 0, sizeof(callbackDeferred));
@@ -56,13 +56,13 @@ static void __initialize()
 }
 
 /*
- * \brief Specifies a named Interrupt Service Routine (ISR) to call when an interrupt occurs.
- *        Replaces any previous function that was attached to the interrupt.
+ * \brief Specifies a named Interrupt Service Routine (ISR) to call when an
+ * interrupt occurs. Replaces any previous function that was attached to the
+ * interrupt.
  *
  * \return Interrupt Mask
  */
-int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
-{
+int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode) {
   if (!enabled) {
     __initialize();
     enabled = 1;
@@ -80,20 +80,20 @@ int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
   uint32_t polarity;
 
   switch (mode) {
-    case CHANGE:
-      polarity = GPIOTE_CONFIG_POLARITY_Toggle;
-      break;
+  case CHANGE:
+    polarity = GPIOTE_CONFIG_POLARITY_Toggle;
+    break;
 
-    case FALLING:
-      polarity = GPIOTE_CONFIG_POLARITY_HiToLo;
-      break;
+  case FALLING:
+    polarity = GPIOTE_CONFIG_POLARITY_HiToLo;
+    break;
 
-    case RISING:
-      polarity = GPIOTE_CONFIG_POLARITY_LoToHi;
-      break;
+  case RISING:
+    polarity = GPIOTE_CONFIG_POLARITY_LoToHi;
+    break;
 
-    default:
-      return 0;
+  default:
+    return 0;
   }
 
   // All information for the configuration is known, except the prior values
@@ -101,27 +101,33 @@ int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
   //     CONFIG[n] = (CONFIG[n] & oldRegMask) | newRegBits;
   //
   // Three fields are configured here: PORT/PIN, POLARITY, MODE
-  const uint32_t oldRegMask = ~(GPIOTE_CONFIG_PORT_PIN_Msk | GPIOTE_CONFIG_POLARITY_Msk | GPIOTE_CONFIG_MODE_Msk);
+  const uint32_t oldRegMask =
+      ~(GPIOTE_CONFIG_PORT_PIN_Msk | GPIOTE_CONFIG_POLARITY_Msk |
+        GPIOTE_CONFIG_MODE_Msk);
   const uint32_t newRegBits =
-    ((pin                      << GPIOTE_CONFIG_PSEL_Pos    ) & GPIOTE_CONFIG_PORT_PIN_Msk) |
-    ((polarity                 << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk) |
-    ((GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos    ) & GPIOTE_CONFIG_MODE_Msk    ) ;
+      ((pin << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk) |
+      ((polarity << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk) |
+      ((GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) &
+       GPIOTE_CONFIG_MODE_Msk);
 
   int ch = -1;
   int newChannel = 0;
 
   // Find channel where pin is already assigned, if any
   for (int i = 0; i < NUMBER_OF_GPIO_TE; i++) {
-    if ((uint32_t)channelMap[i] != pin) continue;
+    if ((uint32_t)channelMap[i] != pin)
+      continue;
     ch = i;
     break;
   }
   // else, find one not already mapped and also not in use by others
   if (ch == -1) {
     for (int i = 0; i < NUMBER_OF_GPIO_TE; i++) {
-      if (channelMap[i] != -1) continue;
-      if (nrf_gpiote_te_is_enabled(NRF_GPIOTE, i)) continue;
-      
+      if (channelMap[i] != -1)
+        continue;
+      if (nrf_gpiote_te_is_enabled(NRF_GPIOTE, i))
+        continue;
+
       ch = i;
       newChannel = 1;
       break;
@@ -132,16 +138,20 @@ int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
     return 0; // no channel available
   }
 
-  channelMap[ch]         = pin;      // harmless for existing channel
-  callbacksInt[ch]       = callback; // caller might be updating this for existing channel
-  callbackDeferred[ch]   = deferred; // caller might be updating this for existing channel
+  channelMap[ch] = pin; // harmless for existing channel
+  callbacksInt[ch] =
+      callback; // caller might be updating this for existing channel
+  callbackDeferred[ch] =
+      deferred; // caller might be updating this for existing channel
 
   uint32_t tmp = NRF_GPIOTE->CONFIG[ch];
   tmp &= oldRegMask;
-  tmp |= newRegBits;                 // for existing channel, effectively updates only the polarity
+  tmp |=
+      newRegBits; // for existing channel, effectively updates only the polarity
   NRF_GPIOTE->CONFIG[ch] = tmp;
 
-  // For a new channel, additionally ensure no old events existed, and enable the interrupt
+  // For a new channel, additionally ensure no old events existed, and enable
+  // the interrupt
   if (newChannel) {
     NRF_GPIOTE->EVENTS_IN[ch] = 0;
     NRF_GPIOTE->INTENSET = (1 << ch);
@@ -154,8 +164,7 @@ int attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
 /*
  * \brief Turns off the given interrupt.
  */
-void detachInterrupt(uint32_t pin)
-{
+void detachInterrupt(uint32_t pin) {
   if (pin >= PINS_COUNT) {
     return;
   }
@@ -177,8 +186,7 @@ void detachInterrupt(uint32_t pin)
   }
 }
 
-void GPIOTE_IRQHandler()
-{
+void GPIOTE_IRQHandler() {
 #if CFG_SYSVIEW
   SEGGER_SYSVIEW_RecordEnterISR();
 #endif
@@ -190,14 +198,16 @@ void GPIOTE_IRQHandler()
     // only process where the interrupt is enabled and the event register is set
     // check interrupt enabled mask first, as already read that IOM value, to
     // reduce delays from AHB (16MHz) reads.
-    if ( 0 == (enabledInterruptMask & (1 << ch))) continue;
-    if ( 0 == NRF_GPIOTE->EVENTS_IN[ch]) continue;
+    if (0 == (enabledInterruptMask & (1 << ch)))
+      continue;
+    if (0 == NRF_GPIOTE->EVENTS_IN[ch])
+      continue;
 
     // If the event was set and interrupts are enabled,
     // call the callback function only if it exists,
     // but ALWAYS clear the event to prevent an interrupt storm.
     if (channelMap[ch] != -1 && callbacksInt[ch]) {
-      if ( callbackDeferred[ch] ) {
+      if (callbackDeferred[ch]) {
         // Adafruit defer callback to non-isr if configured so
         ada_callback(NULL, 0, callbacksInt[ch]);
       } else {
@@ -212,7 +222,11 @@ void GPIOTE_IRQHandler()
   // See note at nRF52840_PS_v1.1.pdf section 6.1.8 ("interrupt clearing")
   // See also https://gcc.gnu.org/onlinedocs/gcc/Volatiles.html for why
   // using memory barrier instead of read of an unrelated volatile
-  __DSB(); __NOP();__NOP();__NOP();__NOP();
+  __DSB();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
 #endif
 
 #if CFG_SYSVIEW
